@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class StageManager : Singleton<StageManager>
 {
     [SerializeField] AudioSource currentBGM;
-    [SerializeField] Image backgroundImage;
+    [SerializeField] SpriteRenderer backgroundImage;
     Stage _cureentStage;
     public Stage currentStage
     {
