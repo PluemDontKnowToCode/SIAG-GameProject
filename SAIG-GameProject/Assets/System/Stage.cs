@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class Stage : MonoBehaviour
 {
-    [SerializeField] float defualtSpeed;
-    [SerializeField] Enemy[] enemies;
-    [SerializeField] AudioClip BGM;
-    [SerializeField] Sprite background;
+    public float defualtSpeed;
+    public Enemy[] enemies;
+    public AudioClip BGM;
+    public Sprite background;
+    
 }
