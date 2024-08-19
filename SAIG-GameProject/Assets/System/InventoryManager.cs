@@ -17,9 +17,16 @@ public class Item
 public class InventoryManager : SingletonPersistent<InventoryManager>
 {
     [Header("Inventory")]
-    List<Item> items = new List<Item>();
+    Dictionary<Item,Slot> items = new Dictionary<Item,Slot>();
 
+    public void AddItem()
+    {
+        
+    }
     
-    
+}
+public class Slot 
+{
+
 }
 

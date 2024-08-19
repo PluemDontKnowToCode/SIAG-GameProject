@@ -22,5 +22,9 @@ public class StageManager : Singleton<StageManager>
 
         }
     }
+    void SpawnEnemy()
+    {
+        
+    }
     
 }

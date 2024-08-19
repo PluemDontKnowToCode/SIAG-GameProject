@@ -1,26 +1,35 @@
 using UnityEngine;
 using System;
-[RequireComponent(typeof(Animator),typeof(Rigidbody2D),typeof(Collider2D))]
+
+[RequireComponent(typeof(Animator), typeof(Collider2D))]
 public class Humanoid : MonoBehaviour
 {
     [SerializeField] string _name;
     public string Name => _name;
     public Stat HP;
+    public Stat SPD;
     protected Animator animator;
-    protected Rigidbody2D rigidBody2D;
+    protected Rigidbody2D rb;
     protected Collider2D collider;
+    [SerializeField] protected float health = 5f;
+    [SerializeField] protected float speed;
+    
     protected virtual void Start()
     {
+        HP = new Stat(health);
+        SPD = new Stat(speed);
         animator = GetComponent<Animator>();
-        rigidBody2D = GetComponent<Rigidbody2D>();
+        rb = GetComponent<Rigidbody2D>();
         collider = GetComponent<Collider2D>();
     }
-    public virtual void TakeDamage(int stat)
+    
+    public virtual void TakeDamage(float stat)
     {
-        HP.UpdateStat(-1 * stat);
+        HP.UpdateStat(-1f * stat);
         Debug.Log("Take Damage");
     }
-    public virtual void Heal(int stat)
+
+    public virtual void Heal(float stat)
     {
         HP.UpdateStat(stat);
         Debug.Log("Heal");
@@ -30,42 +39,42 @@ public class Humanoid : MonoBehaviour
 [Serializable]
 public class Stat
 {
-    [SerializeField] private int _maxStat;
-    private int _currentStat;
+    private float _maxStat;
+    private float _currentStat;
 
-    public int CurrentStat => _currentStat;
-    public int MaxStat => _maxStat;
+    public float CurrentStat => _currentStat;
+    public float MaxStat => _maxStat;
 
     // Constructor to set up Stat
-    public Stat(int maxHP)
+    public Stat(float maxHP)
     {
         _currentStat = _maxStat = maxHP;
     }
 
     // Method to heal and hurt character
-    public int UpdateStat(int amount)
+    public float UpdateStat(float amount)
     {
         _currentStat += amount;
         if (_currentStat > _maxStat)
         {
             _currentStat = _maxStat;
         }
-        else if (_currentStat < 0)
+        else if (_currentStat < 0f)
         {
-            _currentStat = 0;
+            _currentStat = 0f;
         }
         return _currentStat;
     }
 
-    public void SetStat(int newStat)
+    public void SetStat(float newStat)
     {
         if (newStat > _maxStat)
         {
             _currentStat = _maxStat;
         }
-        else if (newStat < 0)
+        else if (newStat < 0f)
         {
-            _currentStat = 0;
+            _currentStat = 0f;
         }
         else
         {
@@ -73,4 +82,5 @@ public class Stat
         }
     }
 }
+
 

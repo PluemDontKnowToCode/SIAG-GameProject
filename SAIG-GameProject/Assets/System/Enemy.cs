@@ -5,21 +5,25 @@ using UnityEngine;
 public class Enemy : Humanoid
 {
     string word;
+    float shootTime;
     protected override void Start()
     {
         base.Start();
-        HP = new Stat(word.Length);
     }
-    public override void TakeDamage(int stat)
+    public override void TakeDamage(float stat)
     {
         base.TakeDamage(stat);
+        if(HP.CurrentStat == 0)
+        {
+            Destroy(gameObject);
+        }
     }
-    public override void Heal(int stat)
+    void Update()
+    {
+        shootTime += Time.deltaTime;
+    }
+    public override void Heal(float stat)
     {
         base.Heal(stat);
-    }
-    void SetUp()
-    {
-        
     }
 }

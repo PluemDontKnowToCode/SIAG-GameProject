@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class Player : Humanoid
 {
+    [SerializeField] GameObject bulletPrefab;
     private static Player _instance;
     public static Player Instance
     {
@@ -30,15 +31,32 @@ public class Player : Humanoid
         }
     }
 
-    [SerializeField] int health = 5;
-    Enemy currentTarget;
+    Vector2 movement;
 
-        protected override void Start()
+    protected override void Start()
     {
         base.Start();
-        HP = new Stat(health);
+        
     }
-    public override void TakeDamage(int stat)
+    void Update()
+    {
+        if(Input.GetKeyDown(KeyCode.Mouse0))
+        {
+            Shoot();
+        }
+        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePosition.z = 0f;
+
+        Vector3 direction = mousePosition - transform.position;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+
+        transform.rotation = Quaternion.Euler(0, 0, angle - 90);
+
+        movement.x = Input.GetAxisRaw("Horizontal");
+        movement.y = Input.GetAxisRaw("Vertical");
+        rb.MovePosition(rb.position + movement * SPD.CurrentStat * Time.fixedDeltaTime);
+    }
+    public override void TakeDamage(float stat)
     {
         base.TakeDamage(stat);
         if(HP.CurrentStat == 0)
@@ -50,16 +68,13 @@ public class Player : Humanoid
     {
 
     }
-    public override void Heal(int stat)
+    public override void Heal(float stat)
     {
         base.Heal(stat);
     }
-    void Kill()
+    void Shoot()
     {
-        //typing
-    }
-    void LockTarget()
-    {
-
+        GameObject bullet = Instantiate(bulletPrefab,transform.position, Quaternion.identity);
+        bullet.SetActive(true);
     }
 }
