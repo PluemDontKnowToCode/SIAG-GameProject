@@ -1,9 +1,10 @@
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Player : Humanoid
 {
-    [SerializeField] GameObject bulletPrefab;
+    
     private static Player _instance;
     public static Player Instance
     {
@@ -30,20 +31,42 @@ public class Player : Humanoid
             return _instance;
         }
     }
-
+    [SerializeField] Slider healthBar;
     Vector2 movement;
+    float fireCooldown = 0;
+    float defualtDamage;
+    public bool isDie { get; private set; }
 
     protected override void Start()
     {
         base.Start();
-        
+        Respawn();
+    }
+    public void Respawn()
+    {
+        defualtDamage = damage;
+        healthBar.value = healthBar.maxValue = HP.MaxStat;
+        isDie = false;
+        HP = new Stat(health);
+        SPD = new Stat(speed);
     }
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Mouse0))
+        if (healthBar != null)
+        {
+            healthBar.value = Mathf.Lerp(healthBar.value, HP.CurrentStat , 3f * Time.deltaTime);
+        }
+
+        if(Input.GetKeyDown(KeyCode.Mouse0) && fireCooldown <= 0)
         {
             Shoot();
+            fireCooldown = 0.2f;
         }
+        fireCooldown -= Time.deltaTime;
+        Move();
+    }
+    void Move()
+    {
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mousePosition.z = 0f;
 
@@ -59,6 +82,7 @@ public class Player : Humanoid
     public override void TakeDamage(float stat)
     {
         base.TakeDamage(stat);
+        animator.Play("Hurt");
         if(HP.CurrentStat == 0)
         {
             Die();
@@ -66,6 +90,8 @@ public class Player : Humanoid
     }
     void Die()
     {
+        Debug.Log("Die");
+        damage = defualtDamage;
 
     }
     public override void Heal(float stat)
@@ -74,7 +100,25 @@ public class Player : Humanoid
     }
     void Shoot()
     {
-        GameObject bullet = Instantiate(bulletPrefab,transform.position, Quaternion.identity);
+        GameObject bullet = Instantiate(StageManager.Instance.bulletPrefab,transform.position, Quaternion.identity);
         bullet.SetActive(true);
+
+        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePosition.z = 0; // Make sure the z-coordinate is zero in 2D.
+
+        bullet.GetComponent<Bullet>().CreateBullet(
+            Bullet.UserType.Player, 
+            mousePosition, 
+            30f, 
+            damage);
     }
+    void OnCollisionEnter2D(Collision2D other)
+    {
+        if(other.gameObject.TryGetComponent<Enemy>(out Enemy enemy))
+        {
+            enemy.TakeDamage(2f);
+            TakeDamage(0.5f);
+        }
+    }
+    
 }

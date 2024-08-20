@@ -1,24 +1,51 @@
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 public class Bullet : MonoBehaviour
 {
-    public float speed = 50f;
+    float speed = 50f;
+    float damage; // The amount of damage the bullet will deal
     public float lifeTime = 2f; // The time after which the bullet is destroyed
-    public int damage = 10; // The amount of damage the bullet will deal
     Vector2 direction;
     private Rigidbody2D rb;
-    void Start()
+    [SerializeField] Light2D light;
+    public enum UserType
     {
-        rb = GetComponent<Rigidbody2D>();
+        Player = 0,
+        Enemy = 1
+    }
+    UserType user;
+    public void CreateBullet(UserType type, Vector3 target, float speed, float damage)
+    {
+        user = type;
+        this.speed = speed;
+        this.damage = damage;
         Destroy(gameObject, lifeTime);
-        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePosition.z = 0; // Make sure the z-coordinate is zero in 2D.
-
+        
         // Set the velocity of the bullet
-        direction = (mousePosition - transform.position).normalized;
+        direction = (target - transform.position).normalized;
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
         transform.rotation = Quaternion.Euler(0, 0, angle - 90);
+    }
+    public void CreateBullet(UserType type, Vector3 target, float speed, float damage, Color color)
+    {
+        user = type;
+        this.speed = speed;
+        this.damage = damage;
+        Destroy(gameObject, lifeTime);
+
+        light.color = color;
+        // Set the velocity of the bullet
+        direction = (target - transform.position).normalized;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+
+        transform.rotation = Quaternion.Euler(0, 0, angle - 90);
+    }
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        
     }
     void Update()
     {
@@ -28,11 +55,21 @@ public class Bullet : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D hitInfo)
     {
-        // If the target has an Enemy script, deal damage to it
-        if (hitInfo.TryGetComponent<Enemy>(out Enemy enemy))
+        if(user == UserType.Player)
         {
-            enemy.TakeDamage(damage);
-            Destroy(gameObject);
+            if (hitInfo.TryGetComponent<Enemy>(out Enemy enemy))
+            {
+                enemy.TakeDamage(damage);
+                Destroy(gameObject);
+            }
+        }
+        else if(user == UserType.Enemy)
+        {
+            if (hitInfo.TryGetComponent<Player>(out Player player))
+            {
+                player.TakeDamage(damage);
+                Destroy(gameObject);
+            }
         }
     }
 }

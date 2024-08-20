@@ -1,11 +1,9 @@
 using UnityEngine;
 using System;
 
-[RequireComponent(typeof(Animator), typeof(Collider2D))]
+[RequireComponent(typeof(Animator),typeof(Rigidbody2D))]
 public class Humanoid : MonoBehaviour
 {
-    [SerializeField] string _name;
-    public string Name => _name;
     public Stat HP;
     public Stat SPD;
     protected Animator animator;
@@ -13,11 +11,11 @@ public class Humanoid : MonoBehaviour
     protected Collider2D collider;
     [SerializeField] protected float health = 5f;
     [SerializeField] protected float speed;
+    [SerializeField] protected float damage;
     
     protected virtual void Start()
     {
-        HP = new Stat(health);
-        SPD = new Stat(speed);
+        
         animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
         collider = GetComponent<Collider2D>();
