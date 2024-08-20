@@ -24,13 +24,11 @@ public class Humanoid : MonoBehaviour
     public virtual void TakeDamage(float stat)
     {
         HP.UpdateStat(-1f * stat);
-        Debug.Log("Take Damage");
     }
 
     public virtual void Heal(float stat)
     {
         HP.UpdateStat(stat);
-        Debug.Log("Heal");
     }
 }
 

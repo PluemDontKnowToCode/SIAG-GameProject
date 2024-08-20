@@ -1,10 +1,11 @@
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class Player : Humanoid
 {
-    
+    [SerializeField] float dashDelay,dashingPower, dashingTime;
     private static Player _instance;
     public static Player Instance
     {
@@ -31,39 +32,46 @@ public class Player : Humanoid
             return _instance;
         }
     }
-    [SerializeField] Slider healthBar;
+    TrailRenderer tr;
     Vector2 movement;
     float fireCooldown = 0;
     float defualtDamage;
+    bool canDash = true;
+    bool isDashing = false;
     public bool isDie { get; private set; }
 
     protected override void Start()
     {
         base.Start();
+        tr = GetComponent<TrailRenderer>();
         Respawn();
     }
     public void Respawn()
     {
         defualtDamage = damage;
-        healthBar.value = healthBar.maxValue = HP.MaxStat;
+        
         isDie = false;
         HP = new Stat(health);
         SPD = new Stat(speed);
     }
     void Update()
     {
-        if (healthBar != null)
-        {
-            healthBar.value = Mathf.Lerp(healthBar.value, HP.CurrentStat , 3f * Time.deltaTime);
-        }
-
         if(Input.GetKeyDown(KeyCode.Mouse0) && fireCooldown <= 0)
         {
             Shoot();
             fireCooldown = 0.2f;
         }
         fireCooldown -= Time.deltaTime;
-        Move();
+
+        if (Input.GetKeyDown(KeyCode.Mouse1) && canDash && !isDashing) 
+        {
+            Debug.Log("Dash");
+            StartCoroutine(Dash());
+        }
+        if(StageManager.Instance.IsGameAvalible)
+        {
+            Move();
+        }
     }
     void Move()
     {
@@ -88,11 +96,30 @@ public class Player : Humanoid
             Die();
         }
     }
+    IEnumerator Dash()
+    {
+        isDashing = true;
+
+        Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 dashDirection = (mousePosition - (Vector2)transform.position).normalized;
+
+        tr.emitting = true;
+        rb.velocity = dashDirection * dashingPower;
+        yield return new WaitForSeconds(dashingTime);
+
+        tr.emitting = false;
+
+        rb.velocity = Vector2.zero;
+        isDashing = false;
+
+        yield return new WaitForSeconds(dashDelay);
+        canDash = true;
+    }
     void Die()
     {
         Debug.Log("Die");
         damage = defualtDamage;
-
+        StageManager.Instance.ResetGame();
     }
     public override void Heal(float stat)
     {
@@ -116,6 +143,7 @@ public class Player : Humanoid
     {
         if(other.gameObject.TryGetComponent<Enemy>(out Enemy enemy))
         {
+            Debug.Log("Hit Enemy");
             enemy.TakeDamage(2f);
             TakeDamage(0.5f);
         }

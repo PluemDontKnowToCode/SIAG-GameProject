@@ -6,33 +6,21 @@ using UnityEngine.UI;
 
 public class StageManager : Singleton<StageManager>
 {
-    [Header("UI")]
+    [Header("InGameUI")]
     [SerializeField] GameObject PauseUI;
-    [SerializeField] GameObject RespawnUI;
+    [SerializeField] GameObject InGameUI;
     [SerializeField] TMP_Text scoreDisplay;
-    [SerializeField] AudioSource currentBGM;
+    public Slider healthBar;
+    [Header("StartUI")]
+    [SerializeField] GameObject StartUI;
+    [SerializeField] TMP_Text HighScore;
+    [SerializeField] GameObject creditPage;
+    int highScore;
+    [Header("ETC ")]
+    [SerializeField] AudioSource BGM;
     [SerializeField] Enemy[] enemiesPrefab;
     public GameObject bulletPrefab;
-    bool _isGameAvalible;
-    public bool IsGameAvalible
-    {
-        get
-        {
-            return _isGameAvalible;
-        }
-        set
-        {
-            _isGameAvalible = value;
-            if(value)
-            {
-                Time.timeScale = 1;
-            }
-            else
-            {
-                Time.timeScale = 0;
-            }
-        }
-    }
+    public bool IsGameAvalible;
     int _enemyCount = 0;
     int _score;
     public int Score
@@ -40,14 +28,13 @@ public class StageManager : Singleton<StageManager>
         get { return _score; }
         set
         {
-            StartCoroutine(AnimateScoreChange(_score, value));
+            StartCoroutine(AnimateScoreChange(_score, value,0.5f));
             _score = value;
         }
     }
 
-    private IEnumerator AnimateScoreChange(int oldScore, int newScore)
+    private IEnumerator AnimateScoreChange(int oldScore, int newScore,float duration)
     {
-        float duration = 0.5f; // Animation duration
         float elapsedTime = 0f;
         
         while (elapsedTime < duration)
@@ -86,17 +73,27 @@ public class StageManager : Singleton<StageManager>
     float maxDelay;
     void Start()
     {
-        PauseUI.SetActive(false);
-        RespawnUI.SetActive(false);
+        highScore = PlayerPrefs.GetInt("HighScore");
+        HighScore.text = $"HighScore : <color=#ff0000><b>{highScore}<b></color>";
+        InGameUI.SetActive(false);
+        StartUI.SetActive(true);
     }
     void Update()
     {
+        if (!IsGameAvalible)
+        {
+            return;
+        }
+        if (healthBar != null)
+        {
+            healthBar.value = Mathf.Lerp(healthBar.value, Player.Instance.HP.CurrentStat , 3f * Time.deltaTime);
+        }
         PauseGame();
 
         if(spawnDelay <= 0)
         {
             SpawnEnemies();
-            maxDelay = 3 - (killCount / 50);
+            maxDelay = 2 - (killCount / 50);
 
             if(maxDelay < 0.8f)
             {
@@ -117,12 +114,12 @@ public class StageManager : Singleton<StageManager>
         else if(Player.Instance.isDie)
         {
             IsGameAvalible = false;
-            RespawnUI.SetActive(true);
+            StartUI.SetActive(true);
         }
     }
     void SpawnEnemies()
     {
-        if(EnemyCount < 20)
+        if(EnemyCount < 30)
         {
             Vector3 spawnPosition = GetRandomPositionAroundPlayer();
             Enemy enemy = Instantiate(
@@ -143,11 +140,42 @@ public class StageManager : Singleton<StageManager>
 
         // Create the spawn position by adding the random point to the player's position
         Vector3 spawnPosition = new Vector3(
-            player.position.x + randomPoint.x + 5f, 
-            player.position.y + randomPoint.y + 5f, 
+            player.position.x + randomPoint.x + 10f, 
+            player.position.y + randomPoint.y + 10f, 
             player.position.z);
 
         return spawnPosition;
     }
-    
+    public void StartGame()
+    {
+        healthBar.maxValue = Player.Instance.HP.MaxStat;
+        healthBar.value = Player.Instance.HP.MaxStat;
+        
+        IsGameAvalible = true;
+
+        InGameUI.SetActive(true);
+        StartUI.SetActive(false);
+
+        healthBar.gameObject.SetActive(true);
+        scoreDisplay.gameObject.SetActive(true);
+    }
+    public void ResetGame()
+    {
+        
+
+        PauseUI.SetActive(false);
+
+        healthBar.gameObject.SetActive(false);
+        scoreDisplay.gameObject.SetActive(false);
+
+        InGameUI.SetActive(false);
+        StartUI.SetActive(true);
+
+        if(Score > highScore)
+        {
+            PlayerPrefs.SetInt("HighScore", Score);
+            StartCoroutine(AnimateScoreChange(Score, highScore, 0.9f));
+            highScore = Score;
+        }
+    }
 }

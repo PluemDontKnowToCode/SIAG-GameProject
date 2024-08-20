@@ -6,13 +6,13 @@ using UnityEngine;
 public class Enemy : Humanoid
 {
     float shootTime = 0;
-    float score = 300;
+    [SerializeField] float score = 300;
     [SerializeField] float fireCooldown;
     protected override void Start()
     {
         base.Start();
         StageManager.Instance.EnemyCount++;
-        HP = new Stat(health);
+        HP = new Stat(health + StageManager.Instance.killCount/ 20);
         SPD = new Stat(speed);
     }
     public override void TakeDamage(float stat)
@@ -31,6 +31,10 @@ public class Enemy : Humanoid
     }
     void Update()
     {
+        if(!StageManager.Instance.IsGameAvalible)
+        {
+            Destroy(gameObject);
+        }
         Move();
         score -= Time.deltaTime;
         shootTime += Time.deltaTime;
@@ -67,9 +71,9 @@ public class Enemy : Humanoid
         bullet.SetActive(true);
 
         Vector3 randomPosition = new Vector3(
-            Random.Range(-2f, 2f), // x component
-            Random.Range(-2f, 2f), // y component
-            Random.Range(-2f, 2f)  // z component
+            Random.Range(-0.8f, 0.8f),
+            Random.Range(-0.8f, 0.8f),
+            0
         );
 
         bullet.GetComponent<Bullet>().CreateBullet(
