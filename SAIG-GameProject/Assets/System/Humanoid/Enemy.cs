@@ -8,6 +8,11 @@ public class Enemy : Humanoid
     float shootTime = 0;
     [SerializeField] float score = 300;
     [SerializeField] float fireCooldown;
+    [Header("RandomMovement")]
+    [SerializeField] private float moveDuration = 0.5f; // How long the movement lasts
+    [SerializeField] private float idleDuration = 1f;   // How long to wait before the next movement
+    [SerializeField] private float movementRadius = 1f; // Radius of the random movement
+    private bool isMoving;
     protected override void Start()
     {
         base.Start();
@@ -25,7 +30,7 @@ public class Enemy : Humanoid
             Destroy(gameObject);
         }
     }
-    void SpawnItem()
+    void DropItem()
     {
 
     }
@@ -56,10 +61,40 @@ public class Enemy : Humanoid
             Vector2 newPosition = Vector2.MoveTowards(
                 rb.position,
                 Player.Instance.transform.position,
-                SPD.CurrentStat * Time.deltaTime);
+                SPD.MaxStat * Time.deltaTime);
 
             rb.MovePosition(newPosition);
         }
+        else
+        {
+            StartCoroutine(MoveRandomly());
+        }
+    }
+    IEnumerator MoveRandomly()
+    {
+        if (!isMoving)
+        {
+            Vector2 randomDirection = GetRandomDirection();
+            Vector2 targetPosition = (Vector2)transform.position + randomDirection;
+
+            isMoving = true;
+            float elapsedTime = 0f;
+
+            while (elapsedTime < moveDuration)
+            {
+                transform.position = Vector2.MoveTowards(transform.position, targetPosition, SPD.MaxStat * Time.deltaTime);
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+
+            isMoving = false;
+            yield return new WaitForSeconds(idleDuration);
+        }
+    }
+    private Vector2 GetRandomDirection()
+    {
+        // Generate a random point within a radius
+        return Random.insideUnitCircle * movementRadius;
     }
     public override void Heal(float stat)
     {
@@ -70,15 +105,9 @@ public class Enemy : Humanoid
         GameObject bullet = Instantiate(StageManager.Instance.bulletPrefab,transform.position, Quaternion.identity);
         bullet.SetActive(true);
 
-        Vector3 randomPosition = new Vector3(
-            Random.Range(-0.8f, 0.8f),
-            Random.Range(-0.8f, 0.8f),
-            0
-        );
-
         bullet.GetComponent<Bullet>().CreateBullet(
             Bullet.UserType.Enemy,
-            Player.Instance.transform.position + randomPosition,
+            Player.Instance.transform.position,
             10f,
             damage,
             Color.red

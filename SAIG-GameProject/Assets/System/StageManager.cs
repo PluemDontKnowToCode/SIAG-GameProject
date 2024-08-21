@@ -19,6 +19,7 @@ public class StageManager : Singleton<StageManager>
     [Header("ETC ")]
     [SerializeField] AudioSource BGM;
     [SerializeField] Enemy[] enemiesPrefab;
+    public GameObject damageFloatingTextPrefab;
     public GameObject bulletPrefab;
     public bool IsGameAvalible;
     int _enemyCount = 0;
@@ -88,21 +89,10 @@ public class StageManager : Singleton<StageManager>
         {
             healthBar.value = Mathf.Lerp(healthBar.value, Player.Instance.HP.CurrentStat , 3f * Time.deltaTime);
         }
+
         PauseGame();
-
-        if(spawnDelay <= 0)
-        {
-            SpawnEnemies();
-            maxDelay = 2 - (killCount / 50);
-
-            if(maxDelay < 0.8f)
-            {
-                maxDelay = 0.8f;
-            }
-
-            spawnDelay = maxDelay;
-        }
-        spawnDelay -= Time.deltaTime;
+        SpawnEnemies();
+        
     }
     void PauseGame()
     {
@@ -119,29 +109,41 @@ public class StageManager : Singleton<StageManager>
     }
     void SpawnEnemies()
     {
-        if(EnemyCount < 30)
+        if(spawnDelay <= 0)
         {
-            Vector3 spawnPosition = GetRandomPositionAroundPlayer();
-            Enemy enemy = Instantiate(
-                enemiesPrefab[Random.Range(0,enemiesPrefab.Length-1)],
-                spawnPosition, 
-                Quaternion.identity
-            );
-            enemy.gameObject.SetActive(true);
+            if(EnemyCount < 30)
+            {
+                Vector3 spawnPosition = GetRandomPositionAroundPlayer();
+                Enemy enemy = Instantiate(
+                    enemiesPrefab[Random.Range(0,enemiesPrefab.Length-1)],
+                    spawnPosition, 
+                    Quaternion.identity
+                );
+                enemy.gameObject.SetActive(true);
+            }
+            
+            maxDelay = 2 - (killCount / 50);
+
+            if(maxDelay < 0.8f)
+            {
+                maxDelay = 0.8f;
+            }
+
+            spawnDelay = maxDelay;
         }
+        spawnDelay -= Time.deltaTime;
     }
 
     Vector3 GetRandomPositionAroundPlayer()
     {
         Transform player = Player.Instance.transform;
         // Generate a random point inside a circle
-        Vector2 randomPoint = Random.insideUnitCircle * 10;
-
+        Vector2 randomPoint = Random.insideUnitCircle * 15;
 
         // Create the spawn position by adding the random point to the player's position
         Vector3 spawnPosition = new Vector3(
-            player.position.x + randomPoint.x + 10f, 
-            player.position.y + randomPoint.y + 10f, 
+            player.position.x + randomPoint.x + 15f, 
+            player.position.y + randomPoint.y + 15f, 
             player.position.z);
 
         return spawnPosition;

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using TMPro;
 
 [RequireComponent(typeof(Animator),typeof(Rigidbody2D))]
 public class Humanoid : MonoBehaviour
@@ -12,7 +13,7 @@ public class Humanoid : MonoBehaviour
     [SerializeField] protected float health = 5f;
     [SerializeField] protected float speed;
     [SerializeField] protected float damage;
-    
+    public Color color;
     protected virtual void Start()
     {
         
@@ -24,6 +25,15 @@ public class Humanoid : MonoBehaviour
     public virtual void TakeDamage(float stat)
     {
         HP.UpdateStat(-1f * stat);
+
+        var go = Instantiate(
+            StageManager.Instance.damageFloatingTextPrefab, 
+            transform.position, 
+            Quaternion.identity);
+
+        go.SetActive(true);
+        go.GetComponent<TextMeshPro>().color = color;
+        go.GetComponent<TextMeshPro>().text = (-1f * stat).ToString();
     }
 
     public virtual void Heal(float stat)

@@ -39,7 +39,7 @@ public class Player : Humanoid
     bool canDash = true;
     bool isDashing = false;
     public bool isDie { get; private set; }
-
+    [SerializeField] AudioSource dieSFX;
     protected override void Start()
     {
         base.Start();
@@ -118,12 +118,14 @@ public class Player : Humanoid
     void Die()
     {
         Debug.Log("Die");
+        dieSFX.Play();
         damage = defualtDamage;
         StageManager.Instance.ResetGame();
     }
     public override void Heal(float stat)
     {
         base.Heal(stat);
+        //Player animation
     }
     void Shoot()
     {
@@ -136,7 +138,7 @@ public class Player : Humanoid
         bullet.GetComponent<Bullet>().CreateBullet(
             Bullet.UserType.Player, 
             mousePosition, 
-            30f, 
+            10f, 
             damage);
     }
     void OnCollisionEnter2D(Collision2D other)
@@ -148,5 +150,22 @@ public class Player : Humanoid
             TakeDamage(0.5f);
         }
     }
-    
+    void OnCollisionStay2D(Collision2D other)
+    {
+        if(other.gameObject.TryGetComponent<Enemy>(out Enemy enemy))
+        {
+            Debug.Log("Hit Enemy");
+            enemy.TakeDamage(2f);
+            TakeDamage(0.5f);
+        }
+    }
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if(other.CompareTag("Healing"))
+        {
+            Debug.Log("Hit Enemy");
+            Destroy(other);
+            Heal(1f);
+        }
+    }
 }
