@@ -38,6 +38,7 @@ public class Player : Humanoid
     float defualtDamage;
     bool canDash = true;
     bool isDashing = false;
+    [SerializeField] float buffKillTime;
     public bool isDie { get; private set; }
     [Header("SFX")]
     [SerializeField] AudioSource dieSFX;
@@ -53,6 +54,7 @@ public class Player : Humanoid
     public void Respawn()
     {
         defualtDamage = damage;
+        isBerserkmode = false;
         
         isDie = false;
         HP = new Stat(health);
@@ -78,8 +80,8 @@ public class Player : Humanoid
 
         if (Input.GetKeyDown(KeyCode.Mouse1) && canDash && !isDashing) 
         {
-            Debug.Log("Dash");
-            StartCoroutine(Dash());
+            // Debug.Log("Dash");
+            // StartCoroutine(Dash());
         }
     }
     void Move()
@@ -99,7 +101,7 @@ public class Player : Humanoid
     public override void TakeDamage(float stat)
     {
         base.TakeDamage(stat);
-        if(HP.CurrentStat == 0)
+        if(HP.CurrentStat == 0 && !isDie)
         {
             Die();
         }
@@ -112,9 +114,13 @@ public class Player : Humanoid
     IEnumerator Dash()
     {
         isDashing = true;
+        canDash = false;
+        Vector2 direction;
 
-        Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 dashDirection = (mousePosition - (Vector2)transform.position).normalized;
+        direction.x = Input.GetAxisRaw("Horizontal");
+        direction.y = Input.GetAxisRaw("Vertical");
+
+        Vector2 dashDirection = (direction - (Vector2)transform.position).normalized;
 
         tr.emitting = true;
         rb.velocity = dashDirection * dashingPower;
@@ -162,8 +168,17 @@ public class Player : Humanoid
         if(other.gameObject.TryGetComponent<Enemy>(out Enemy enemy))
         {
             Debug.Log("Hit Enemy");
-            enemy.TakeDamage(2f);
-            TakeDamage(0.5f);
+            float damage = 2f;
+            if(isBerserkmode)
+            {
+                damage = 10000f;
+            }
+            else
+            {
+                TakeDamage(0.5f);
+            }
+            enemy.TakeDamage(damage);
+            
         }
     }
     void OnCollisionStay2D(Collision2D other)
@@ -171,9 +186,28 @@ public class Player : Humanoid
         if(other.gameObject.TryGetComponent<Enemy>(out Enemy enemy))
         {
             Debug.Log("Hit Enemy");
-            enemy.TakeDamage(2f);
-            TakeDamage(0.5f);
+            float damage = 2f;
+            if(isBerserkmode)
+            {
+                damage = 10000f;
+            }
+            else
+            {
+                TakeDamage(0.5f);
+            }
+            enemy.TakeDamage(damage);
         }
     }
-    
+    public bool isBerserkmode = false;
+    public void UpdateBerserkMode()
+    {
+        Debug.Log("BerserkMode");
+        StartCoroutine(DelayBerserkMode());
+    }
+    IEnumerator DelayBerserkMode()
+    {
+        isBerserkmode = true;
+        yield return new WaitForSeconds(buffKillTime);
+        isBerserkmode = false;
+    }
 }

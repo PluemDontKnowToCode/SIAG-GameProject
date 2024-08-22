@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Wall
   - Healing
+  - InstanceKill
   layers:
   - Default
   - TransparentFX

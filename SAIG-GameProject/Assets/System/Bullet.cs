@@ -51,7 +51,7 @@ public class Bullet : MonoBehaviour
     {
         Vector3 movement = direction * speed *  1000 * Time.deltaTime;
         rb.velocity = movement;
-        
+
         if(!StageManager.Instance.IsGameAvalible)
         {
             Destroy(gameObject);
@@ -64,9 +64,11 @@ public class Bullet : MonoBehaviour
         {
             if (hitInfo.TryGetComponent<Enemy>(out Enemy enemy))
             {
-                
-                Vector2 knockbackDirection = (transform.position - hitInfo.transform.position).normalized;
-                enemy.TakeDamage(damage, knockbackDirection);
+                if(Player.Instance.isBerserkmode)
+                {
+                    damage = 10000f;
+                }
+                enemy.TakeDamage(damage);
                 Destroy(gameObject);
             }
         }
@@ -74,6 +76,10 @@ public class Bullet : MonoBehaviour
         {
             if (hitInfo.TryGetComponent<Player>(out Player player))
             {
+                if(Player.Instance.isBerserkmode)
+                {
+                    player.TakeDamage(damage * 0.5f);
+                }
                 player.TakeDamage(damage);
                 Destroy(gameObject);
             }

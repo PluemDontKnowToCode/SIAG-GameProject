@@ -18,7 +18,7 @@ public class StageManager : Singleton<StageManager>
     public Slider healthBar;
     [Header("StartUI")]
     [SerializeField] GameObject StartUI;
-    [SerializeField] TMP_Text HighScore;
+    [SerializeField] TMP_Text HighScoreDisplay;
     [SerializeField] GameObject creditPage;
     [SerializeField] GameObject mainMenuBGM;
     int highScore;
@@ -104,7 +104,7 @@ public class StageManager : Singleton<StageManager>
         creditPage.SetActive(false);
         killCountAnim = killCountText.GetComponent<Animator>();
         highScore = PlayerPrefs.GetInt("HighScore");
-        HighScore.text = $"HighScore : <color=#ff0000><b>{highScore}<b></color>";
+        HighScoreDisplay.text = $"HighScore : <color=#ff0000><b>{highScore}<b></color>";
 
         mainMenuBGM.SetActive(true);
         InGameBGM.SetActive(false);
@@ -129,7 +129,7 @@ public class StageManager : Singleton<StageManager>
     }
     void PauseGame()
     {
-        if(Player.Instance.isDie || Input.GetKeyDown(KeyCode.Escape))
+        if((Player.Instance.isDie || Input.GetKeyDown(KeyCode.Escape)) && IsGameAvalible)
         {
             ResetGame();
         }
@@ -138,6 +138,10 @@ public class StageManager : Singleton<StageManager>
             UnimportantUI.SetActive(!UnimportantUI.activeInHierarchy);
         }
     }
+    public void ExitApplication()
+    {
+        Application.Quit();
+    }
     void SpawnEnemies()
     {
         if(spawnDelay <= 0)
@@ -145,7 +149,7 @@ public class StageManager : Singleton<StageManager>
             if(EnemyCount < 30)
             {
                 int randomNum = Random.Range(0, obPrefab.Length - 1);
-                Vector3 spawnPosition = (randomNum == 4) ? GetRandomPositionAroundPlayer(2f) : GetRandomPositionAroundPlayer(10f);
+                Vector3 spawnPosition = (randomNum == 5 || randomNum == 11) ? GetRandomPositionAroundPlayer(5f) : GetRandomPositionAroundPlayer(15f);
                 GameObject objectToSpawn = Instantiate(
                     obPrefab[randomNum],
                     spawnPosition, 
@@ -154,7 +158,7 @@ public class StageManager : Singleton<StageManager>
                 objectToSpawn.gameObject.SetActive(true);
             }
             
-            maxDelay = 2 - (killCount / 10);
+            maxDelay = 2 - (killCount / 30);
 
             if(maxDelay < 0.8f)
             {
@@ -184,7 +188,7 @@ public class StageManager : Singleton<StageManager>
     {
         healthBar.maxValue = Player.Instance.HP.MaxStat;
         healthBar.value = Player.Instance.HP.MaxStat;
-
+        Score = 0;
         StartTimeline.Play();
 
         Player.Instance.Respawn();
@@ -206,8 +210,9 @@ public class StageManager : Singleton<StageManager>
             if(Score > highScore)
             {
                 PlayerPrefs.SetInt("HighScore", Score);
-                StartCoroutine(AnimateScoreChange(Score, highScore, 0.9f));
                 highScore = Score;
+                HighScoreDisplay.text = $"HighScore : <color=#ff0000><b>{highScore}<b></color>";
+                
             }
         }
     }

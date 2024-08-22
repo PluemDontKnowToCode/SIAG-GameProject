@@ -13,11 +13,6 @@ public class Enemy : Humanoid
     [SerializeField] private float idleDuration = 1f;   // How long to wait before the next movement
     [SerializeField] private float movementRadius = 3f; // Radius of the random movement
 
-    [SerializeField] private float knockbackForce = 10f; // The force applied during knockback
-    [SerializeField] private float knockbackDuration = 0.2f; // How long the knockback lasts
-
-
-    private bool isKnockedBack = false;
     private bool isMoving;
     [SerializeField] AudioSource dieSFX;
     [SerializeField] AudioSource ShootSFX;
@@ -26,10 +21,10 @@ public class Enemy : Humanoid
     {
         base.Start();
         StageManager.Instance.EnemyCount++;
-        HP = new Stat(health + StageManager.Instance.killCount/ 20);
-        SPD = new Stat(speed);
+        HP = new Stat(health + StageManager.Instance.killCount/ 50);
+        SPD = new Stat(speed + StageManager.Instance.killCount/ 200);
     }
-    public void TakeDamage(float stat,Vector2 direction)
+    public void TakeDamage(float stat)
     {
         base.TakeDamage(stat);
         
@@ -40,11 +35,11 @@ public class Enemy : Humanoid
             StageManager.Instance.EnemyCount--;
             StageManager.Instance.Score += (int)score;
             StageManager.Instance.killCount++;
+            
+            var go = Instantiate(StageManager.Instance.enemyDieFXPrefab, transform.position, Quaternion.identity);
+            go.SetActive(true);
+            Destroy(go, 0.5f);
             Destroy(gameObject);
-        }
-        else
-        {
-            ApplyKnockback(direction);
         }
     }
     void DropItem()
@@ -108,27 +103,7 @@ public class Enemy : Humanoid
             yield return new WaitForSeconds(idleDuration);
         }
     }
-    public void ApplyKnockback(Vector2 direction)
-    {
-        if (!isKnockedBack)
-        {
-            StartCoroutine(KnockbackCoroutine(direction));
-        }
-    }
 
-    private IEnumerator KnockbackCoroutine(Vector2 direction)
-    {
-        isKnockedBack = true;
-
-        // Apply the knockback force
-        rb.AddForce(direction * knockbackForce, ForceMode2D.Impulse);
-
-        yield return new WaitForSeconds(knockbackDuration);
-
-        // Stop the knockback by setting the velocity to zero
-        rb.velocity = Vector2.zero;
-        isKnockedBack = false;
-    }
     private Vector2 GetRandomDirection()
     {
         // Generate a random point within a radius
