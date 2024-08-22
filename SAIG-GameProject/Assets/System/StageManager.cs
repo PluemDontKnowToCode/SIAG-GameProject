@@ -12,22 +12,25 @@ public class StageManager : Singleton<StageManager>
     [SerializeField] GameObject InGameUI;
     [SerializeField] TMP_Text scoreDisplay;
     [SerializeField] TMP_Text killCountText;
-    [SerializeField] Animator killCountAnim;
+    Animator killCountAnim;
     [SerializeField] GameObject UnimportantUI;
+    [SerializeField] GameObject InGameBGM;
     public Slider healthBar;
     [Header("StartUI")]
     [SerializeField] GameObject StartUI;
     [SerializeField] TMP_Text HighScore;
     [SerializeField] GameObject creditPage;
+    [SerializeField] GameObject mainMenuBGM;
     int highScore;
     [Header("Transition")]
     [SerializeField] PlayableDirector StartTimeline;
     [SerializeField] PlayableDirector BackTimeline;
     [Header("ETC ")]
-    [SerializeField] AudioSource BGM;
     [SerializeField] GameObject[] obPrefab;
     public GameObject damageFloatingTextPrefab;
     public GameObject bulletPrefab;
+    public GameObject enemyDieFXPrefab;
+
     public bool IsGameAvalible;
     int _enemyCount = 0;
     int _score;
@@ -72,17 +75,28 @@ public class StageManager : Singleton<StageManager>
             }
             else
             {
-                killCount++;
-                killCountText.text = killCount + "x";
-                transform.rotation = Quaternion.Euler(Vector3.zero);
-                transform.rotation = Quaternion.Euler(0f, 0f, Random.Range(-5f,5f));
-
-                killCountAnim.Play("KillCount");
+                
 
             }
         }
     }
-    public int killCount = 0;
+    int _killCount = 0;
+    public int killCount
+    {
+        get
+        {
+            return _killCount;
+        }
+        set
+        {
+            _killCount = value;
+            killCountText.text = killCount + "x";
+            transform.rotation = Quaternion.Euler(Vector3.zero);
+            transform.rotation = Quaternion.Euler(0f, 0f, Random.Range(-5f,5f));
+
+            killCountAnim.Play("KillCount");
+        }
+    }
     float spawnDelay = 0;
     float maxDelay;
     void Start()
@@ -91,6 +105,9 @@ public class StageManager : Singleton<StageManager>
         killCountAnim = killCountText.GetComponent<Animator>();
         highScore = PlayerPrefs.GetInt("HighScore");
         HighScore.text = $"HighScore : <color=#ff0000><b>{highScore}<b></color>";
+
+        mainMenuBGM.SetActive(true);
+        InGameBGM.SetActive(false);
 
         InGameUI.SetActive(false);
         StartUI.SetActive(true);
@@ -114,7 +131,6 @@ public class StageManager : Singleton<StageManager>
     {
         if(Player.Instance.isDie || Input.GetKeyDown(KeyCode.Escape))
         {
-            IsGameAvalible = false;
             ResetGame();
         }
         if(Input.GetKeyDown(KeyCode.Tab) && IsGameAvalible)
@@ -178,6 +194,8 @@ public class StageManager : Singleton<StageManager>
     IEnumerator GameAvailable(bool isAvalible)
     {
         yield return new WaitForSeconds(2f);
+        mainMenuBGM.SetActive(!isAvalible);
+        InGameBGM.SetActive(isAvalible);
         IsGameAvalible = isAvalible;
         if(isAvalible)
         {

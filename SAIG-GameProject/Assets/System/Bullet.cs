@@ -51,6 +51,11 @@ public class Bullet : MonoBehaviour
     {
         Vector3 movement = direction * speed *  1000 * Time.deltaTime;
         rb.velocity = movement;
+        
+        if(!StageManager.Instance.IsGameAvalible)
+        {
+            Destroy(gameObject);
+        }
     }
 
     void OnTriggerEnter2D(Collider2D hitInfo)

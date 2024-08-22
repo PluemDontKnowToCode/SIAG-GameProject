@@ -11,7 +11,7 @@ public class Enemy : Humanoid
     [Header("RandomMovement")]
     [SerializeField] private float moveDuration = 0.5f; // How long the movement lasts
     [SerializeField] private float idleDuration = 1f;   // How long to wait before the next movement
-    [SerializeField] private float movementRadius = 1f; // Radius of the random movement
+    [SerializeField] private float movementRadius = 3f; // Radius of the random movement
 
     [SerializeField] private float knockbackForce = 10f; // The force applied during knockback
     [SerializeField] private float knockbackDuration = 0.2f; // How long the knockback lasts
@@ -19,6 +19,9 @@ public class Enemy : Humanoid
 
     private bool isKnockedBack = false;
     private bool isMoving;
+    [SerializeField] AudioSource dieSFX;
+    [SerializeField] AudioSource ShootSFX;
+    [SerializeField] AudioSource HitSFX;
     protected override void Start()
     {
         base.Start();
@@ -30,10 +33,13 @@ public class Enemy : Humanoid
     {
         base.TakeDamage(stat);
         
+        HitSFX.Play();
+        
         if(HP.CurrentStat == 0)
         {
             StageManager.Instance.EnemyCount--;
             StageManager.Instance.Score += (int)score;
+            StageManager.Instance.killCount++;
             Destroy(gameObject);
         }
         else
@@ -128,12 +134,10 @@ public class Enemy : Humanoid
         // Generate a random point within a radius
         return Random.insideUnitCircle * movementRadius;
     }
-    public override void Heal(float stat)
-    {
-        base.Heal(stat);
-    }
     void Shoot()
     {
+        ShootSFX.Play();
+
         GameObject bullet = Instantiate(StageManager.Instance.bulletPrefab,transform.position, Quaternion.identity);
         bullet.SetActive(true);
 

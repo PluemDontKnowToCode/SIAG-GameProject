@@ -13,7 +13,10 @@ public class HealObject : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if(!StageManager.Instance.IsGameAvalible)
+        {
+            Destroy(gameObject);
+        }
     }
     void OnTriggerEnter2D(Collider2D other)
     {

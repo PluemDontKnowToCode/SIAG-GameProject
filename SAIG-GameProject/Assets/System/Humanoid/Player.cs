@@ -103,7 +103,7 @@ public class Player : Humanoid
         {
             Die();
         }
-        else
+        else if(StageManager.Instance.IsGameAvalible)
         {
             HitSFX.Play();
             animator.Play("Hurt");
