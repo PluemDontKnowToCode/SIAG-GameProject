@@ -39,7 +39,11 @@ public class Player : Humanoid
     bool canDash = true;
     bool isDashing = false;
     public bool isDie { get; private set; }
+    [Header("SFX")]
     [SerializeField] AudioSource dieSFX;
+    [SerializeField] AudioSource healSFX;
+    [SerializeField] AudioSource ShootSFX;
+    [SerializeField] AudioSource HitSFX;
     protected override void Start()
     {
         base.Start();
@@ -56,6 +60,15 @@ public class Player : Humanoid
     }
     void Update()
     {
+        
+        if(StageManager.Instance.IsGameAvalible)
+        {
+            Move();
+        }
+        else
+        {
+            return;
+        }
         if(Input.GetKeyDown(KeyCode.Mouse0) && fireCooldown <= 0)
         {
             Shoot();
@@ -67,10 +80,6 @@ public class Player : Humanoid
         {
             Debug.Log("Dash");
             StartCoroutine(Dash());
-        }
-        if(StageManager.Instance.IsGameAvalible)
-        {
-            Move();
         }
     }
     void Move()
@@ -90,10 +99,14 @@ public class Player : Humanoid
     public override void TakeDamage(float stat)
     {
         base.TakeDamage(stat);
-        animator.Play("Hurt");
         if(HP.CurrentStat == 0)
         {
             Die();
+        }
+        else
+        {
+            HitSFX.Play();
+            animator.Play("Hurt");
         }
     }
     IEnumerator Dash()
@@ -118,6 +131,7 @@ public class Player : Humanoid
     void Die()
     {
         Debug.Log("Die");
+        isDie = true;
         dieSFX.Play();
         damage = defualtDamage;
         StageManager.Instance.ResetGame();
@@ -125,10 +139,12 @@ public class Player : Humanoid
     public override void Heal(float stat)
     {
         base.Heal(stat);
+        healSFX.Play();
         //Player animation
     }
     void Shoot()
     {
+        ShootSFX.Play();
         GameObject bullet = Instantiate(StageManager.Instance.bulletPrefab,transform.position, Quaternion.identity);
         bullet.SetActive(true);
 
@@ -159,13 +175,5 @@ public class Player : Humanoid
             TakeDamage(0.5f);
         }
     }
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        if(other.CompareTag("Healing"))
-        {
-            Debug.Log("Hit Enemy");
-            Destroy(other);
-            Heal(1f);
-        }
-    }
+    
 }

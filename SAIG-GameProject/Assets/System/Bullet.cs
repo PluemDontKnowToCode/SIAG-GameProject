@@ -59,7 +59,9 @@ public class Bullet : MonoBehaviour
         {
             if (hitInfo.TryGetComponent<Enemy>(out Enemy enemy))
             {
-                enemy.TakeDamage(damage);
+                
+                Vector2 knockbackDirection = (transform.position - hitInfo.transform.position).normalized;
+                enemy.TakeDamage(damage, knockbackDirection);
                 Destroy(gameObject);
             }
         }

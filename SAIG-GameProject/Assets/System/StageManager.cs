@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Playables;
 using UnityEngine.UI;
 
 public class StageManager : Singleton<StageManager>
@@ -10,15 +11,21 @@ public class StageManager : Singleton<StageManager>
     [SerializeField] GameObject PauseUI;
     [SerializeField] GameObject InGameUI;
     [SerializeField] TMP_Text scoreDisplay;
+    [SerializeField] TMP_Text killCountText;
+    [SerializeField] Animator killCountAnim;
+    [SerializeField] GameObject UnimportantUI;
     public Slider healthBar;
     [Header("StartUI")]
     [SerializeField] GameObject StartUI;
     [SerializeField] TMP_Text HighScore;
     [SerializeField] GameObject creditPage;
     int highScore;
+    [Header("Transition")]
+    [SerializeField] PlayableDirector StartTimeline;
+    [SerializeField] PlayableDirector BackTimeline;
     [Header("ETC ")]
     [SerializeField] AudioSource BGM;
-    [SerializeField] Enemy[] enemiesPrefab;
+    [SerializeField] GameObject[] obPrefab;
     public GameObject damageFloatingTextPrefab;
     public GameObject bulletPrefab;
     public bool IsGameAvalible;
@@ -66,6 +73,12 @@ public class StageManager : Singleton<StageManager>
             else
             {
                 killCount++;
+                killCountText.text = killCount + "x";
+                transform.rotation = Quaternion.Euler(Vector3.zero);
+                transform.rotation = Quaternion.Euler(0f, 0f, Random.Range(-5f,5f));
+
+                killCountAnim.Play("KillCount");
+
             }
         }
     }
@@ -74,8 +87,11 @@ public class StageManager : Singleton<StageManager>
     float maxDelay;
     void Start()
     {
+        creditPage.SetActive(false);
+        killCountAnim = killCountText.GetComponent<Animator>();
         highScore = PlayerPrefs.GetInt("HighScore");
         HighScore.text = $"HighScore : <color=#ff0000><b>{highScore}<b></color>";
+
         InGameUI.SetActive(false);
         StartUI.SetActive(true);
     }
@@ -96,15 +112,14 @@ public class StageManager : Singleton<StageManager>
     }
     void PauseGame()
     {
-        if(Input.GetKeyDown(KeyCode.Escape))
+        if(Player.Instance.isDie || Input.GetKeyDown(KeyCode.Escape))
         {
             IsGameAvalible = false;
-            PauseUI.SetActive(true);
+            ResetGame();
         }
-        else if(Player.Instance.isDie)
+        if(Input.GetKeyDown(KeyCode.Tab) && IsGameAvalible)
         {
-            IsGameAvalible = false;
-            StartUI.SetActive(true);
+            UnimportantUI.SetActive(!UnimportantUI.activeInHierarchy);
         }
     }
     void SpawnEnemies()
@@ -113,16 +128,17 @@ public class StageManager : Singleton<StageManager>
         {
             if(EnemyCount < 30)
             {
-                Vector3 spawnPosition = GetRandomPositionAroundPlayer();
-                Enemy enemy = Instantiate(
-                    enemiesPrefab[Random.Range(0,enemiesPrefab.Length-1)],
+                int randomNum = Random.Range(0, obPrefab.Length - 1);
+                Vector3 spawnPosition = (randomNum == 4) ? GetRandomPositionAroundPlayer(2f) : GetRandomPositionAroundPlayer(10f);
+                GameObject objectToSpawn = Instantiate(
+                    obPrefab[randomNum],
                     spawnPosition, 
                     Quaternion.identity
                 );
-                enemy.gameObject.SetActive(true);
+                objectToSpawn.gameObject.SetActive(true);
             }
             
-            maxDelay = 2 - (killCount / 50);
+            maxDelay = 2 - (killCount / 10);
 
             if(maxDelay < 0.8f)
             {
@@ -134,7 +150,7 @@ public class StageManager : Singleton<StageManager>
         spawnDelay -= Time.deltaTime;
     }
 
-    Vector3 GetRandomPositionAroundPlayer()
+    Vector3 GetRandomPositionAroundPlayer(float outside)
     {
         Transform player = Player.Instance.transform;
         // Generate a random point inside a circle
@@ -142,8 +158,8 @@ public class StageManager : Singleton<StageManager>
 
         // Create the spawn position by adding the random point to the player's position
         Vector3 spawnPosition = new Vector3(
-            player.position.x + randomPoint.x + 15f, 
-            player.position.y + randomPoint.y + 15f, 
+            player.position.x + randomPoint.x + outside, 
+            player.position.y + randomPoint.y + outside, 
             player.position.z);
 
         return spawnPosition;
@@ -152,32 +168,35 @@ public class StageManager : Singleton<StageManager>
     {
         healthBar.maxValue = Player.Instance.HP.MaxStat;
         healthBar.value = Player.Instance.HP.MaxStat;
-        
-        IsGameAvalible = true;
 
-        InGameUI.SetActive(true);
-        StartUI.SetActive(false);
+        StartTimeline.Play();
 
-        healthBar.gameObject.SetActive(true);
-        scoreDisplay.gameObject.SetActive(true);
+        Player.Instance.Respawn();
+
+        StartCoroutine(GameAvailable(true));
+    }
+    IEnumerator GameAvailable(bool isAvalible)
+    {
+        yield return new WaitForSeconds(2f);
+        IsGameAvalible = isAvalible;
+        if(isAvalible)
+        {
+
+        }
+        else
+        {
+            if(Score > highScore)
+            {
+                PlayerPrefs.SetInt("HighScore", Score);
+                StartCoroutine(AnimateScoreChange(Score, highScore, 0.9f));
+                highScore = Score;
+            }
+        }
     }
     public void ResetGame()
     {
-        
+        BackTimeline.Play();
 
-        PauseUI.SetActive(false);
-
-        healthBar.gameObject.SetActive(false);
-        scoreDisplay.gameObject.SetActive(false);
-
-        InGameUI.SetActive(false);
-        StartUI.SetActive(true);
-
-        if(Score > highScore)
-        {
-            PlayerPrefs.SetInt("HighScore", Score);
-            StartCoroutine(AnimateScoreChange(Score, highScore, 0.9f));
-            highScore = Score;
-        }
+        StartCoroutine(GameAvailable(false));
     }
 }

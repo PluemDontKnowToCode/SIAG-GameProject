@@ -12,6 +12,12 @@ public class Enemy : Humanoid
     [SerializeField] private float moveDuration = 0.5f; // How long the movement lasts
     [SerializeField] private float idleDuration = 1f;   // How long to wait before the next movement
     [SerializeField] private float movementRadius = 1f; // Radius of the random movement
+
+    [SerializeField] private float knockbackForce = 10f; // The force applied during knockback
+    [SerializeField] private float knockbackDuration = 0.2f; // How long the knockback lasts
+
+
+    private bool isKnockedBack = false;
     private bool isMoving;
     protected override void Start()
     {
@@ -20,14 +26,19 @@ public class Enemy : Humanoid
         HP = new Stat(health + StageManager.Instance.killCount/ 20);
         SPD = new Stat(speed);
     }
-    public override void TakeDamage(float stat)
+    public void TakeDamage(float stat,Vector2 direction)
     {
         base.TakeDamage(stat);
+        
         if(HP.CurrentStat == 0)
         {
             StageManager.Instance.EnemyCount--;
             StageManager.Instance.Score += (int)score;
             Destroy(gameObject);
+        }
+        else
+        {
+            ApplyKnockback(direction);
         }
     }
     void DropItem()
@@ -91,6 +102,27 @@ public class Enemy : Humanoid
             yield return new WaitForSeconds(idleDuration);
         }
     }
+    public void ApplyKnockback(Vector2 direction)
+    {
+        if (!isKnockedBack)
+        {
+            StartCoroutine(KnockbackCoroutine(direction));
+        }
+    }
+
+    private IEnumerator KnockbackCoroutine(Vector2 direction)
+    {
+        isKnockedBack = true;
+
+        // Apply the knockback force
+        rb.AddForce(direction * knockbackForce, ForceMode2D.Impulse);
+
+        yield return new WaitForSeconds(knockbackDuration);
+
+        // Stop the knockback by setting the velocity to zero
+        rb.velocity = Vector2.zero;
+        isKnockedBack = false;
+    }
     private Vector2 GetRandomDirection()
     {
         // Generate a random point within a radius
@@ -108,9 +140,9 @@ public class Enemy : Humanoid
         bullet.GetComponent<Bullet>().CreateBullet(
             Bullet.UserType.Enemy,
             Player.Instance.transform.position,
-            10f,
+            8f,
             damage,
-            Color.red
+            color
             );
     }
     void OnTriggerEnter2D()
